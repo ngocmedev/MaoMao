@@ -119,3 +119,20 @@ export interface StudySessionLog {
   itemsCompleted: number;
   accuracyRate?: number;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  targetHsk: HskLevel;
+  streakDays: number;
+  joinedAt: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+

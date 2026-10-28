@@ -17,13 +17,21 @@ export default function RootPage() {
       {/* Top Navbar */}
       <header className="h-20 max-w-7xl mx-auto w-full px-6 flex items-center justify-between">
         <MaoMaoLogo />
-        <Link
-          href="/dashboard"
-          className="px-5 py-2.5 rounded-2xl bg-[#4F83F1] hover:bg-[#3D72E3] text-white text-xs md:text-sm font-bold shadow-md shadow-[#4F83F1]/20 flex items-center gap-2 transition-all"
-        >
-          <span>Vào không gian học</span>
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/login"
+            className="px-4 py-2 rounded-2xl text-xs md:text-sm font-semibold text-[#202A3B] hover:text-[#4F83F1] hover:bg-white/80 transition-all border border-transparent hover:border-[#E3EAF4]"
+          >
+            Đăng nhập
+          </Link>
+          <Link
+            href="/dashboard"
+            className="px-4 sm:px-5 py-2.5 rounded-2xl bg-[#4F83F1] hover:bg-[#3D72E3] text-white text-xs md:text-sm font-bold shadow-md shadow-[#4F83F1]/20 flex items-center gap-2 transition-all"
+          >
+            <span>Vào học ngay</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </header>
 
       {/* Hero Section */}

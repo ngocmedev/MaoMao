@@ -19,9 +19,10 @@ import {
   ChevronDown,
   ChevronRight,
   Flame,
-  User,
+  LogIn,
 } from "lucide-react";
 import { MaoMaoLogo } from "@/components/ui/MaoMaoLogo";
+import { useAuth } from "@/components/auth/AuthContext";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -30,9 +31,19 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false }: SidebarProps) {
   const pathname = usePathname();
+  const { user, isAuthenticated } = useAuth();
   const [practiceOpen, setPracticeOpen] = useState(
     pathname.startsWith("/practice")
   );
+
+  const getInitials = (name?: string) => {
+    if (!name) return "MM";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
 
   const navItems = [
     {
@@ -199,32 +210,60 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
 
       {/* User profile & streak footer */}
       <div className="p-3 border-t border-[#E3EAF4]/80 bg-white/40">
-        {!collapsed ? (
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-[#F5F9FF] border border-[#E3EAF4]">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#B8A6F6] to-[#4F83F1] flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-inner">
-              MA
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#202A3B] truncate">
-                  Minh Anh
-                </span>
-                <span className="text-[10px] font-bold text-[#315FC7] px-1.5 py-0.2 rounded bg-white border border-[#D0E4FF]">
-                  HSK 2
-                </span>
+        {isAuthenticated && user ? (
+          !collapsed ? (
+            <Link
+              href="/settings"
+              className="flex items-center gap-3 p-2 rounded-xl bg-[#F5F9FF] hover:bg-[#EAF4FF] border border-[#E3EAF4] hover:border-[#D0E4FF] transition-all group"
+              title="Xem cài đặt & hồ sơ cá nhân"
+            >
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#B8A6F6] to-[#4F83F1] flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                {getInitials(user.name)}
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-[#E6A34A] font-medium mt-0.5">
-                <Flame className="w-3 h-3 fill-[#E6A34A] shrink-0" />
-                <span>5 ngày chuỗi</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#202A3B] truncate group-hover:text-[#315FC7]">
+                    {user.name}
+                  </span>
+                  <span className="text-[10px] font-bold text-[#315FC7] px-1.5 py-0.2 rounded bg-white border border-[#D0E4FF]">
+                    {user.targetHsk}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[11px] text-[#E6A34A] font-medium mt-0.5">
+                  <Flame className="w-3 h-3 fill-[#E6A34A] shrink-0" />
+                  <span>{user.streakDays} ngày chuỗi</span>
+                </div>
               </div>
-            </div>
-          </div>
+            </Link>
+          ) : (
+            <Link
+              href="/settings"
+              className="flex justify-center"
+              title={`${user.name} (${user.targetHsk}) - ${user.streakDays} ngày chuỗi`}
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#B8A6F6] to-[#4F83F1] flex items-center justify-center text-white text-xs font-bold shadow-xs hover:scale-110 transition-transform">
+                {getInitials(user.name)}
+              </div>
+            </Link>
+          )
         ) : (
-          <div className="flex justify-center" title="Minh Anh (HSK 2) - 5 ngày chuỗi">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#B8A6F6] to-[#4F83F1] flex items-center justify-center text-white text-xs font-bold">
-              <User className="w-4 h-4" />
-            </div>
-          </div>
+          !collapsed ? (
+            <Link
+              href="/login"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#4F83F1] hover:bg-[#3D72E3] text-white text-xs font-bold shadow-xs transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Đăng nhập</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="flex justify-center p-2 rounded-xl text-[#4F83F1] hover:bg-[#EAF4FF] transition-colors"
+              title="Đăng nhập tài khoản"
+            >
+              <LogIn className="w-5 h-5" />
+            </Link>
+          )
         )}
       </div>
     </aside>

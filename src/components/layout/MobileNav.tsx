@@ -13,8 +13,13 @@ import {
   TrendingUp,
   Settings,
   X,
+  LogIn,
+  LogOut,
+  Flame,
 } from "lucide-react";
 import { MaoMaoLogo } from "@/components/ui/MaoMaoLogo";
+import { useAuth } from "@/components/auth/AuthContext";
+import { useToast } from "@/components/ui/ToastContext";
 
 interface MobileNavProps {
   drawerOpen: boolean;
@@ -23,6 +28,8 @@ interface MobileNavProps {
 
 export function MobileNav({ drawerOpen, onCloseDrawer }: MobileNavProps) {
   const pathname = usePathname();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { showToast } = useToast();
 
   const mainTabs = [
     { label: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
@@ -214,6 +221,67 @@ export function MobileNav({ drawerOpen, onCloseDrawer }: MobileNavProps) {
                 <Settings className="w-4 h-4" />
                 <span>Cài đặt</span>
               </Link>
+            </div>
+
+            {/* User Drawer Footer */}
+            <div className="pt-3 border-t border-[#E3EAF4] mt-auto">
+              {isAuthenticated && user ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#F5F9FF] border border-[#E3EAF4]">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#B8A6F6] to-[#4F83F1] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {user.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-[#202A3B] truncate">
+                        {user.name}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] text-[#778198]">
+                        <span className="font-semibold text-[#4F83F1]">{user.targetHsk}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-0.5 text-[#E6A34A]">
+                          <Flame className="w-2.5 h-2.5 fill-[#E6A34A]" />
+                          {user.streakDays} ngày
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      onCloseDrawer();
+                      await logout();
+                      showToast({
+                        type: "info",
+                        title: "Đã đăng xuất",
+                        message: "Hẹn gặp lại bạn!",
+                      });
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-[#D95D67] hover:bg-[#FDEEF0] border border-[#F9C3C8]/40 transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/login"
+                    onClick={onCloseDrawer}
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-[#202A3B] bg-[#F5F9FF] border border-[#E3EAF4]"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Đăng nhập</span>
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={onCloseDrawer}
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white bg-[#4F83F1]"
+                  >
+                    <span>Đăng ký</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex-1" onClick={onCloseDrawer} />

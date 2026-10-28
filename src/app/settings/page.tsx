@@ -1,23 +1,36 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Sliders,
   RotateCcw,
   Save,
   Layers,
+  LogOut,
+  User as UserIcon,
+  Check,
+  Edit2,
+  Flame,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { UserPreferences, HskLevel } from "@/types";
 import { learningService } from "@/services/learning-service";
+import { useAuth } from "@/components/auth/AuthContext";
 import { useToast } from "@/components/ui/ToastContext";
 import { LoadingState } from "@/components/ui/EmptyState";
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const { user, isAuthenticated, logout, updateUser } = useAuth();
   const { showToast } = useToast();
   const [prefs, setPrefs] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -28,11 +41,35 @@ export default function SettingsPage() {
     load();
   }, []);
 
+  const handleSaveName = async () => {
+    if (!newName.trim()) return;
+    await updateUser({ name: newName.trim() });
+    setIsEditingName(false);
+    showToast({
+      type: "success",
+      title: "Đã cập nhật tên!",
+      message: `Tên hiển thị đã đổi thành "${newName.trim()}".`,
+    });
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    showToast({
+      type: "info",
+      title: "Đã đăng xuất",
+      message: "Hẹn gặp lại bạn trong lần học tới!",
+    });
+    router.push("/login");
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prefs) return;
     setIsSaving(true);
     await learningService.updateUserPreferences(prefs);
+    if (user && user.targetHsk !== prefs.preferredLevel) {
+      await updateUser({ targetHsk: prefs.preferredLevel });
+    }
     setIsSaving(false);
     showToast({
       type: "success",
@@ -67,35 +104,126 @@ export default function SettingsPage() {
     );
   }
 
+  const getInitials = (name?: string) => {
+    if (!name) return "MM";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
     <AppShell
       title="Cài đặt không gian học"
-      subtitle="Tùy biến hiển thị chữ Hán, phiên âm Pinyin, âm thanh và mục tiêu cá nhân"
+      subtitle="Tùy biến hiển thị chữ Hán, phiên âm Pinyin, âm thanh và hồ sơ cá nhân"
     >
       <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-300">
-        {/* Profile Card (Explicit demo profile) */}
-        <div className="glass-panel p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-[#D0E4FF]">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#B8A6F6] to-[#4F83F1] flex items-center justify-center text-white text-lg font-bold shadow-md shadow-[#4F83F1]/20">
-              MA
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-[#202A3B]">Minh Anh</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EAF4FF] text-[#315FC7] border border-[#D0E4FF]">
-                  Demo Profile
-                </span>
+        {/* Dynamic User Profile Card */}
+        {isAuthenticated && user ? (
+          <div className="glass-panel p-6 border border-[#D0E4FF] flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#B8A6F6] to-[#4F83F1] flex items-center justify-center text-white text-lg font-bold shadow-md shadow-[#4F83F1]/20 shrink-0">
+                {getInitials(user.name)}
               </div>
-              <p className="text-xs text-[#778198] mt-0.5">
-                Mục tiêu hiện tại: Chinh phục kỳ thi HSK 2 & 3
-              </p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {isEditingName ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        className="px-2.5 py-1 text-xs font-bold border border-[#4F83F1] rounded-lg bg-white focus:outline-none ring-2 ring-[#4F83F1]/20"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveName}
+                        className="p-1.5 bg-[#4F83F1] text-white rounded-lg hover:bg-[#3D72E3]"
+                        title="Lưu tên"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="text-base font-bold text-[#202A3B]">
+                        {user.name}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewName(user.name);
+                          setIsEditingName(true);
+                        }}
+                        className="p-1 text-[#778198] hover:text-[#4F83F1] transition-colors"
+                        title="Đổi tên hiển thị"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
+                  )}
+
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EAF4FF] text-[#315FC7] border border-[#D0E4FF]">
+                    {user.targetHsk}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs text-[#778198]">
+                  <span>{user.email}</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 text-[#E6A34A] font-semibold">
+                    <Flame className="w-3.5 h-3.5 fill-[#E6A34A]" />
+                    {user.streakDays} ngày chuỗi
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-[#E3EAF4]">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#D95D67] hover:bg-[#FDEEF0] border border-[#F9C3C8]/50 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Đăng xuất</span>
+              </button>
             </div>
           </div>
+        ) : (
+          <div className="glass-panel p-6 border border-[#E3EAF4] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#EAF4FF] flex items-center justify-center text-[#4F83F1]">
+                <UserIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#202A3B]">
+                  Chưa đăng nhập tài khoản
+                </h3>
+                <p className="text-xs text-[#778198]">
+                  Đăng nhập để đồng bộ tiến độ học và lưu trữ kết quả của riêng bạn.
+                </p>
+              </div>
+            </div>
 
-          <div className="text-xs text-[#778198] bg-[#F5F9FF] px-3 py-2 rounded-xl border border-[#E3EAF4]">
-            Chế độ hoạt động độc lập (Local Storage)
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#4F83F1] hover:bg-[#3D72E3] transition-colors"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                href="/register"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-[#202A3B] bg-white border border-[#E3EAF4] hover:bg-[#F5F9FF] transition-colors"
+              >
+                Đăng ký
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
 
         <form onSubmit={handleSave} className="space-y-6">
           {/* SECTION 1: Cài đặt hiển thị tiếng Trung */}
